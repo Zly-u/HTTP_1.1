@@ -1,4 +1,6 @@
-#include "GUI_Server.h"
+#include <print>
+
+#include "gui/GUI_Server.h"
 
 #include "Shared/App.h"
 #include "Shared/MainWindow.h"

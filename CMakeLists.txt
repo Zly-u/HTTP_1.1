@@ -2,7 +2,7 @@
 set(CMAKE_CXX_STANDARD 23)
 
 set(
-    G_MASTER_PROJECT_NAME "HTTP Shenanigans"
+    G_MASTER_PROJECT_NAME "HTTP_1.1"
     CACHE INTERNAL ""
 )
 

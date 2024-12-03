@@ -1,16 +1,23 @@
 #include "GUI_Server.h"
 
-#include <array>
-#include <memory>
-#include <string>
+#include <print>
 
+#include "window_history.h"
 #include "Shared/imgui/imgui_impl_sdl2.h"
 #include "Shared/imgui/imgui_impl_sdlrenderer2.h"
 
 
+void GUI_Server::ButtonPressed(char* str) {
+	std::print("[RAW] Button was pressed: {}\n", str);
+}
+
+void ButtonPressed2(char* str) {
+	std::print("Button was pressed2: {}\n", str);
+}
+
 void GUI_Server::Init(SDL_Renderer* renderer) {
-	// ImGui::StyleColorsDark();
-	// ImGui::StyleColorsLight();
+	GUI_History::OnSendEvent.AddMember(this, &GUI_Server::ButtonPressed);
+	GUI_History::OnSendEvent.AddStatic(&ButtonPressed2);
 }
 
 void GUI_Server::SetupDocking() {
@@ -131,8 +138,6 @@ void GUI_Server::Draw()
 		ImGui::ShowDemoWindow(&m_show_demo_window);
 	}
 
-
-
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
@@ -177,6 +182,9 @@ void GUI_Server::Draw()
 		}
 		ImGui::EndMainMenuBar();
 	}
+
+	GUI_History::ShowHistoryWindow();
+	GUI_History::ShowClientsWindow();
 }
 
 void GUI_Server::Render()

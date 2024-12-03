@@ -9,4 +9,6 @@ public:
 	virtual void Draw() = 0;
 	virtual void Render() = 0;
 	virtual void CleanUp() = 0;
+
+	virtual const struct ImColor& GetClearColor() const = 0;
 };

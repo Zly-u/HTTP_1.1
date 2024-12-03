@@ -6,7 +6,7 @@
 #include "Interface_Gui.h"
 
 App::App(AppSettings& as, WindowSettings& ws, Interface_Gui& gui) : m_settings(&as), m_gui(&gui) {
-	debug::printf("Starting Client App\n");
+	debug::printf("Starting App\n");
 
 	if(MainWindow::WindowSetup(ws) != 0){
 		debug::printf("Window Setup Failed\n");
@@ -19,13 +19,13 @@ App::App(AppSettings& as, WindowSettings& ws, Interface_Gui& gui) : m_settings(&
 	m_gui->Init(MainWindow::Get_SDLRenderer());
 }
 
+
 App::~App() {
 	debug::printf("\nApp::App CLEANING UP\n\n");
 }
 
-void App::Run() {
-	constexpr ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+void App::Run() {
 	bool done = false;
     while (!done) {
         // Poll and handle events (inputs, window resize, etc.)
@@ -66,12 +66,13 @@ void App::Run() {
     		MainWindow::Get_ImGuiIO()->DisplayFramebufferScale.x,
     		MainWindow::Get_ImGuiIO()->DisplayFramebufferScale.y
     	);
+    	const ImVec4& clr_color = GetGui().GetClearColor().Value;
     	SDL_SetRenderDrawColor(
     		MainWindow::Get_SDLRenderer(),
-    		static_cast<Uint8>(clear_color.x * 255),
-    		static_cast<Uint8>(clear_color.y * 255),
-    		static_cast<Uint8>(clear_color.z * 255),
-    		static_cast<Uint8>(clear_color.w * 255)
+    		static_cast<uint8_t>(clr_color.x * 255),
+    		static_cast<uint8_t>(clr_color.y * 255),
+    		static_cast<uint8_t>(clr_color.z * 255),
+    		static_cast<uint8_t>(clr_color.w * 255)
     	);
     	SDL_RenderClear(MainWindow::Get_SDLRenderer());
     	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), MainWindow::Get_SDLRenderer());

@@ -728,11 +728,18 @@ namespace ini
         }
 
         /** Tries to load and decode a ini file from the file at the given path.
-          * @param fileName path to the file that should be loaded. */
-        void load(const std::string &fileName)
+          * @param fileName path to the file that should be loaded.
+          * @return result if the file was successfully opened.
+         */
+        bool load(const std::string &fileName)
         {
             std::ifstream is(fileName.c_str());
+        	if(!is.good()) {
+        		return false;
+        	}
+
             decode(is);
+        	return true;
         }
 
         /** Encodes this inifile object and writes the output to the given stream.

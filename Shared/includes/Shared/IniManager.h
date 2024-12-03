@@ -99,19 +99,20 @@ namespace ini
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-class SHARED_API IniManager : public Singleton<IniManager>{
+class SHARED_API IniManager final : public Singleton<IniManager>{
 public:
 	static ini::IniFile& LoadFile(const std::string& fileName) { return Get().LoadFile_Impl(fileName); }
 	static ini::IniFile& SaveFile(const std::string& fileName) { return Get().SafeFile_Impl(fileName); }
-	static ini::IniFile& GetFile(const std::string& fileName)  { return Get().GetFile_Impl(fileName); }
+	static ini::IniFile& GetFile(const std::string& fileName, bool& file_got_created)  { return Get().GetFile_Impl(fileName, file_got_created); }
+	static ini::IniFile& GetFile(const std::string& fileName) { bool _; return Get().GetFile_Impl(fileName, _);}
 
 
 protected:
-	ini::IniFile& LoadFile_Impl(const std::string& fileName);
-	ini::IniFile& SafeFile_Impl(const std::string& fileName);
-	ini::IniFile& GetFile_Impl(const std::string& fileName);
+	ini::IniFile& LoadFile_Impl(const std::string& file_name);
+	ini::IniFile& SafeFile_Impl(const std::string& file_name);
+	ini::IniFile& GetFile_Impl(const std::string& file_name, bool& file_got_created);
 
 
 private:
-	std::unordered_map<std::string, ini::IniFile> files;
+	std::unordered_map<std::string, ini::IniFile> m_files;
 };

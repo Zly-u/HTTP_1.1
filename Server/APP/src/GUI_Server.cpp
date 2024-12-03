@@ -1,4 +1,4 @@
-#include "GUI_Client.h"
+#include "GUI_Server.h"
 
 #include <array>
 #include <memory>
@@ -8,12 +8,12 @@
 #include "Shared/imgui/imgui_impl_sdlrenderer2.h"
 
 
-void GUI_Client::Init(SDL_Renderer* renderer) {
+void GUI_Server::Init(SDL_Renderer* renderer) {
 	// ImGui::StyleColorsDark();
 	// ImGui::StyleColorsLight();
 }
 
-void GUI_Client::SetupDocking() {
+void GUI_Server::SetupDocking() {
 	ImGuiDockNodeFlags dockspace_flags =
 		// ImGuiDockNodeFlags_HiddenTabBar |
 		// ImGuiDockNodeFlags_NoTabBar |
@@ -23,7 +23,7 @@ void GUI_Client::SetupDocking() {
 	// because it would be confusing to have two docking targets within each others.
 	ImGuiWindowFlags docking_window_flags =
 		ImGuiWindowFlags_NoDocking;
-	if (opt_fullscreen)
+	if (m_opt_fullscreen)
 	{
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
 		ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -55,17 +55,17 @@ void GUI_Client::SetupDocking() {
 	// all active windows docked into it will lose their parent and become undocked.
 	// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
 	// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
-	if (!opt_padding) {
+	if (!m_opt_padding) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	}
 
-	if (ImGui::Begin("Main Dockspace", &dock_is_open, docking_window_flags)) {
+	if (ImGui::Begin("Main Dockspace", &m_dock_is_open, docking_window_flags)) {
 
-		if (!opt_padding) {
+		if (!m_opt_padding) {
 			ImGui::PopStyleVar();
 		}
 
-		if (opt_fullscreen) {
+		if (m_opt_fullscreen) {
 			ImGui::PopStyleVar(2);
 		}
 
@@ -121,14 +121,14 @@ void GUI_Client::SetupDocking() {
 }
 
 
-void GUI_Client::Draw()
+void GUI_Server::Draw()
 {
 	// MTR_SCOPE("GUI", "Draw_Impl");
 	SetupDocking();
 
 	// ImGUI part
-	if (show_demo_window) {
-		ImGui::ShowDemoWindow(&show_demo_window);
+	if (m_show_demo_window) {
+		ImGui::ShowDemoWindow(&m_show_demo_window);
 	}
 
 
@@ -179,7 +179,7 @@ void GUI_Client::Draw()
 	}
 }
 
-void GUI_Client::Render()
+void GUI_Server::Render()
 {
 	// Rendering
 	ImGui::Render();
@@ -191,7 +191,7 @@ void GUI_Client::Render()
 	}
 }
 
-void GUI_Client::CleanUp() {
+void GUI_Server::CleanUp() {
 	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
@@ -199,7 +199,7 @@ void GUI_Client::CleanUp() {
 
 /// UI ELEMENTS ///
 
-void GUI_Client::UI_ShowMenu_File_Impl()
+void GUI_Server::UI_ShowMenu_File_Impl()
 {
 	if (ImGui::MenuItem("New")) {
 	}
@@ -222,7 +222,7 @@ void GUI_Client::UI_ShowMenu_File_Impl()
 
 }
 
-void GUI_Client::HelpMarker_Impl(const char* desc)
+void GUI_Server::HelpMarker_Impl(const char* desc)
 {
 	ImGui::TextDisabled("(?)");
 	if (ImGui::BeginItemTooltip())

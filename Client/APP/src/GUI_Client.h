@@ -6,7 +6,7 @@
 struct SDL_Texture;
 struct SDL_Renderer;
 
-class GUI_Client : public Interface_Gui {
+class GUI_Client final : public Interface_Gui {
 public:
 	~GUI_Client(){
 		CleanUp();
@@ -18,6 +18,8 @@ public:
 	void Draw() override;
 	void Render() override;
 	void CleanUp() override;
+
+	const ImColor& GetClearColor() const override { return m_clear_color; };
 	// ~Interface_Gui
 
 private:
@@ -27,13 +29,13 @@ private:
 
 
 private:
-	bool dock_is_open	= true;
-	bool opt_fullscreen	= true;
-	bool opt_padding	= false; // Removes padding for all the child windows
+	bool m_dock_is_open   = true;
+	bool m_opt_fullscreen = true;
+	bool m_opt_padding    = false; // Removes padding for all the child windows
 
 	// Our state
-	bool   show_demo_window    = true;
-	bool   show_another_window = false;
-	ImVec4 clear_color         = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	bool   m_show_demo_window    = true;
+	bool   m_show_another_window = false;
+	ImColor m_clear_color        = ImColor(0.45f, 0.55f, 0.60f, 1.00f);
 };
 

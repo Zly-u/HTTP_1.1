@@ -5,7 +5,6 @@
 #include <string>
 
 struct AppSettings {
-	std::string title;
 	std::string ini_name;
 };
 
@@ -16,6 +15,8 @@ public:
 
 	void Run();
 	void DrawGui();
+
+	constexpr Interface_Gui& GetGui() const { return *m_gui; };
 
 private:
 	AppSettings* m_settings;

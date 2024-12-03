@@ -23,7 +23,7 @@ void GUI_Client::SetupDocking() {
 	// because it would be confusing to have two docking targets within each others.
 	ImGuiWindowFlags docking_window_flags =
 		ImGuiWindowFlags_NoDocking;
-	if (opt_fullscreen)
+	if (m_opt_fullscreen)
 	{
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
 		ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -55,17 +55,17 @@ void GUI_Client::SetupDocking() {
 	// all active windows docked into it will lose their parent and become undocked.
 	// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
 	// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
-	if (!opt_padding) {
+	if (!m_opt_padding) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	}
 	
-	if (ImGui::Begin("Main Dockspace", &dock_is_open, docking_window_flags)) {
+	if (ImGui::Begin("Main Dockspace", &m_dock_is_open, docking_window_flags)) {
 		
-		if (!opt_padding) {
+		if (!m_opt_padding) {
 			ImGui::PopStyleVar();
 		}
 
-		if (opt_fullscreen) {
+		if (m_opt_fullscreen) {
 			ImGui::PopStyleVar(2);
 		}
 		
@@ -127,8 +127,8 @@ void GUI_Client::Draw()
 	SetupDocking();
 
 	// ImGUI part
-	if (show_demo_window) {
-		ImGui::ShowDemoWindow(&show_demo_window);
+	if (m_show_demo_window) {
+		ImGui::ShowDemoWindow(&m_show_demo_window);
 	}
 
 	

@@ -3,14 +3,21 @@
 #include "window_history.h"
 #include "Shared/imgui/imgui_impl_sdl2.h"
 #include "Shared/imgui/imgui_impl_sdlrenderer2.h"
+#include "server.h"
 
 void GUI_Server::CommandTrySend(char* str) {
 
 }
 
+void GUI_Server::OnMessageReceived(int8_t* bytes) {
+	GUI_History::AddClientMessage((char*)bytes);
+}
+
 void GUI_Server::Init(SDL_Renderer* renderer) {
+	server::OnMessageReceived.AddMember(this, &GUI_Server::OnMessageReceived);
+
 	GUI_History::OnSendEvent.AddMember(this, &GUI_Server::CommandTrySend);
-	GUI_History::OnSendEvent.AddStatic(&GUI_History::AddMessage);
+	GUI_History::OnSendEvent.AddStatic(&GUI_History::AddServerMessage);
 }
 
 void GUI_Server::SetupDocking() {

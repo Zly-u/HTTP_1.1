@@ -7,7 +7,9 @@ DECLARE_MULTICAST_DELEGATE(OnSend, char*);
 
 class GUI_History {
 public:
-	static void AddMessage(char* message);
+	static void AddServerMessage(char* message);
+	static void AddClientMessage(char* message);
+
 	static void ShowHistoryWindow();
 	static void ShowClientsWindow();
 

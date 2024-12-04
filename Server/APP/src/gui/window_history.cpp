@@ -1,9 +1,14 @@
 #include "window_history.h"
 
+#include "server.h"
 #include "Shared/imgui/imgui.h"
 
-void GUI_History::AddMessage(char* message) {
+void GUI_History::AddServerMessage(char* message) {
 	m_history.emplace_back("[Server]:" + std::string(message));
+}
+
+void GUI_History::AddClientMessage(char* message) {
+	m_history.emplace_back("[Client]:" + std::string(message));
 }
 
 void GUI_History::ShowHistoryWindow(){
@@ -30,8 +35,16 @@ void GUI_History::ShowHistoryWindow(){
 
 		constexpr ImGuiInputTextFlags f_it = ImGuiInputTextFlags_None;
 
+		const float butt_width = ImGui::CalcItemWidth();
+		if (ImGui::Button("Start Host")) {
+			if(server::StartServer() == 0) {
+			}
+		}
+
+		ImGui::SameLine();
+
 		static char c_input_buffer[128];
-		ImGui::PushItemWidth(ImGui::GetWindowWidth() - 83);
+		ImGui::PushItemWidth(ImGui::GetWindowWidth() - butt_width);
 		ImGui::InputText("<<", c_input_buffer, 128, f_it);
 		ImGui::PopItemWidth();
 

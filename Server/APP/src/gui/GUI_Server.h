@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "Shared/Interface_Gui.h"
 #include "Shared/imgui/imgui.h"
 
@@ -7,12 +9,13 @@ struct SDL_Texture;
 struct SDL_Renderer;
 
 class GUI_Server final : public Interface_Gui {
-	public:
+public:
 	~GUI_Server(){
 		CleanUp();
 	}
 
 	void CommandTrySend(char* str);
+	void OnMessageReceived(int8_t* str);
 	// Interface_Gui
 	void Init(SDL_Renderer* renderer) override;
 	void SetupDocking() override;
@@ -23,13 +26,13 @@ class GUI_Server final : public Interface_Gui {
 	const ImColor& GetClearColor() const override { return m_clear_color; };
 	// ~Interface_Gui
 
-	private:
+private:
 	/// UI ELEMENTS ///
 	void UI_ShowMenu_File_Impl();
 	void HelpMarker_Impl(const char* desc);
 
 
-	private:
+private:
 	bool m_dock_is_open   = true;
 	bool m_opt_fullscreen = true;
 	bool m_opt_padding    = false; // Removes padding for all the child windows

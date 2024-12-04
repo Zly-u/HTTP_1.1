@@ -2,8 +2,9 @@
 
 #include "Shared/imgui/imgui.h"
 
-char GUI_History::input_buffer[128] = "";
-OnSend GUI_History::OnSendEvent;
+void GUI_History::AddMessage(char* message) {
+	m_history.emplace_back("[Server]:" + std::string(message));
+}
 
 void GUI_History::ShowHistoryWindow(){
 	static bool show = true;
@@ -11,6 +12,7 @@ void GUI_History::ShowHistoryWindow(){
 		| ImGuiWindowFlags_NoTitleBar
 		| ImGuiWindowFlags_NoScrollbar
 	;
+
 	if (ImGui::Begin("History"), show, h_wf) {
 		constexpr ImGuiChildFlags wf = ImGuiChildFlags_None
 		// | ImGuiChildFlags_AlwaysAutoResize
@@ -19,7 +21,9 @@ void GUI_History::ShowHistoryWindow(){
 		;
 
 		if (ImGui::BeginChild(69, ImVec2(-1, ImGui::GetWindowHeight() - 58), wf)) {
-
+			for(auto& messsage : m_history) {
+				ImGui::Text(messsage.c_str());
+			}
 		}ImGui::EndChild();
 
 		////////////////////////////////////////////////////////////////////////////////////

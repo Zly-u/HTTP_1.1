@@ -1,23 +1,16 @@
 #include "GUI_Server.h"
 
-#include <print>
-
 #include "window_history.h"
 #include "Shared/imgui/imgui_impl_sdl2.h"
 #include "Shared/imgui/imgui_impl_sdlrenderer2.h"
 
+void GUI_Server::CommandTrySend(char* str) {
 
-void GUI_Server::ButtonPressed(char* str) {
-	std::print("[RAW] Button was pressed: {}\n", str);
-}
-
-void ButtonPressed2(char* str) {
-	std::print("Button was pressed2: {}\n", str);
 }
 
 void GUI_Server::Init(SDL_Renderer* renderer) {
-	GUI_History::OnSendEvent.AddMember(this, &GUI_Server::ButtonPressed);
-	GUI_History::OnSendEvent.AddStatic(&ButtonPressed2);
+	GUI_History::OnSendEvent.AddMember(this, &GUI_Server::CommandTrySend);
+	GUI_History::OnSendEvent.AddStatic(&GUI_History::AddMessage);
 }
 
 void GUI_Server::SetupDocking() {

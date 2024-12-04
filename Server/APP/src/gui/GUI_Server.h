@@ -12,7 +12,7 @@ class GUI_Server final : public Interface_Gui {
 		CleanUp();
 	}
 
-	void ButtonPressed(char* str);
+	void CommandTrySend(char* str);
 	// Interface_Gui
 	void Init(SDL_Renderer* renderer) override;
 	void SetupDocking() override;

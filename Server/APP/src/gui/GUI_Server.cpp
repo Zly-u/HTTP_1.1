@@ -6,7 +6,7 @@
 #include "server.h"
 
 void GUI_Server::CommandTrySend(char* str) {
-
+	server::SendToAll((uint8_t*)str);
 }
 
 void GUI_Server::OnMessageReceived(int8_t* bytes) {

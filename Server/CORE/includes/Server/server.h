@@ -14,5 +14,6 @@ namespace server {
 	int worker_StartListening(const std::stop_token& stop_token);
 	int worker_Receiver(const std::stop_token& stop_token);
 
+	int SendToAll(uint8_t* data);
 	void ProcessResult(int8_t* bytes);
 }

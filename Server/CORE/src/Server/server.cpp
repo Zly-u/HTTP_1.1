@@ -11,9 +11,13 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
+#define DEFAULT_BUFLEN 512
+
 namespace server {
 	std::jthread m_listening_thread;
 	std::jthread m_receiving_thread;
+
+	int8_t ReceiverBuffer[DEFAULT_BUFLEN];
 
 	WSADATA wsaData;
 	SOCKET ListenSocket = INVALID_SOCKET;
@@ -128,9 +132,7 @@ namespace server {
 
 	int worker_Receiver(const std::stop_token& stop_token) {
 		debug::printf("Receiver loop...\n");
-		#define DEFAULT_BUFLEN 512
 
-		int8_t ReceiverBuffer[DEFAULT_BUFLEN];
 		int iResult;
 		int iSendResult;
 
@@ -152,18 +154,6 @@ namespace server {
 				debug::printf("\t\tBytes received: %d\n", iResult);
 
 				ProcessResult(ReceiverBuffer);
-
-				// Echo the buffer back to the sender
-				iSendResult = send(ClientSocket, (char*)ReceiverBuffer, iResult, 0);
-				if (iSendResult == SOCKET_ERROR) {
-					debug::printf("\t\tsend failed: %d\n", WSAGetLastError());
-
-					closesocket(ClientSocket);
-					WSACleanup();
-
-					return 1;
-				}
-				debug::printf("\t\tBytes sent: %d\n", iSendResult);
 			}
 			else if (iResult == 0)
 			{
@@ -197,6 +187,19 @@ namespace server {
 		}
 
 		debug::printf("Receiver has stopped!\n\n");
+
+		return 0;
+	}
+
+	int SendToAll(uint8_t* data) {
+		if(ClientSocket == INVALID_SOCKET) { return 1; }
+
+		if (send(ClientSocket, (char*)data, (int) strlen((char*)data), 0) == SOCKET_ERROR) {
+			debug::printf("\t\tsend failed: %d\n", WSAGetLastError());
+			return 1;
+		}
+
+		debug::printf("\t\tBytes sent: %d\n", strlen((char*)data));
 
 		return 0;
 	}

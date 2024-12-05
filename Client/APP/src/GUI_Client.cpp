@@ -1,16 +1,23 @@
 #include "GUI_Client.h"
 
-#include <array>
-#include <memory>
-#include <string>
-
+#include "window_history.h"
 #include "Shared/imgui/imgui_impl_sdl2.h"
 #include "Shared/imgui/imgui_impl_sdlrenderer2.h"
+#include "client.h"
 
+void GUI_Client::CommandTrySend(char* str) {
+	client::SendData((int8_t*)str);
+}
+
+void GUI_Client::OnMessageReceived(int8_t* bytes) {
+	GUI_History::AddServerMessage((char*)bytes);
+}
 
 void GUI_Client::Init(SDL_Renderer* renderer) {
-	// ImGui::StyleColorsDark();
-	// ImGui::StyleColorsLight();
+	client::OnClientMessageReceived.AddMember(this, &GUI_Client::OnMessageReceived);
+
+	GUI_History::OnSendEvent.AddMember(this, &GUI_Client::CommandTrySend);
+	GUI_History::OnSendEvent.AddStatic(&GUI_History::AddClientMessage);
 }
 
 void GUI_Client::SetupDocking() {
@@ -18,7 +25,7 @@ void GUI_Client::SetupDocking() {
 		// ImGuiDockNodeFlags_HiddenTabBar |
 		// ImGuiDockNodeFlags_NoTabBar |
 		ImGuiDockNodeFlags_AutoHideTabBar;
-	
+
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
 	// because it would be confusing to have two docking targets within each others.
 	ImGuiWindowFlags docking_window_flags =
@@ -58,9 +65,9 @@ void GUI_Client::SetupDocking() {
 	if (!m_opt_padding) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	}
-	
+
 	if (ImGui::Begin("Main Dockspace", &m_dock_is_open, docking_window_flags)) {
-		
+
 		if (!m_opt_padding) {
 			ImGui::PopStyleVar();
 		}
@@ -68,7 +75,7 @@ void GUI_Client::SetupDocking() {
 		if (m_opt_fullscreen) {
 			ImGui::PopStyleVar(2);
 		}
-		
+
 		// Submit the DockSpace
 		if (
 			ImGuiIO& io = ImGui::GetIO();
@@ -102,7 +109,7 @@ void GUI_Client::SetupDocking() {
 	 //            if (ImGui::MenuItem("Flag: PassthruCentralNode",    "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0, opt_fullscreen)) { dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
 	 //            ImGui::Separator();
 	 //
-	 //            
+	 //
 	 //        }ImGui::EndMenu();
 	 //        HelpMarker(
 	 //            "When docking is enabled, you can ALWAYS dock MOST window into another! Try it now!" "\n"
@@ -115,7 +122,7 @@ void GUI_Client::SetupDocking() {
 	 //            "Read comments in ShowExampleAppDockSpace() for more details."
 	 //        );
 	 //
-	 //        
+	 //
 	 //    }	ImGui::EndMenuBar();
 	} ImGui::End(); /* Dockspace */
 }
@@ -131,8 +138,6 @@ void GUI_Client::Draw()
 		ImGui::ShowDemoWindow(&m_show_demo_window);
 	}
 
-	
-			
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
@@ -151,9 +156,9 @@ void GUI_Client::Draw()
 			if (ImGui::MenuItem("Cut", "CTRL+X")) {}
 
 			if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-			
+
 			if (ImGui::MenuItem("Paste", "CTRL+V")) {}
-			
+
 			ImGui::EndMenu(); // Edit
 		}
 		if (ImGui::BeginMenu("Options"))
@@ -161,7 +166,7 @@ void GUI_Client::Draw()
 			if (ImGui::MenuItem("Scale")) {}
 
 			ImGui::Separator();
-			
+
 			if (ImGui::BeginMenu("Themes"))
 			{
 				if(ImGui::MenuItem("Dark")) {
@@ -172,11 +177,14 @@ void GUI_Client::Draw()
 				}
 				ImGui::EndMenu();
 			}
-			
+
 			ImGui::EndMenu(); // Options
 		}
 		ImGui::EndMainMenuBar();
 	}
+
+	GUI_History::ShowHistoryWindow();
+	GUI_History::ShowClientsWindow();
 }
 
 void GUI_Client::Render()
@@ -203,7 +211,7 @@ void GUI_Client::UI_ShowMenu_File_Impl()
 {
 	if (ImGui::MenuItem("New")) {
 	}
-	
+
 	if (ImGui::MenuItem("Open", "Ctrl+O")) {
 	}
 
@@ -211,15 +219,15 @@ void GUI_Client::UI_ShowMenu_File_Impl()
 	{
 		ImGui::EndMenu();
 	}
-		
+
 	if (ImGui::MenuItem("Save", "Ctrl+S")) {}
-		
+
 	if (ImGui::MenuItem("Save As..", "Ctrl+Shift+S")) {}
-	
+
 	ImGui::Separator();
-	
+
 	if (ImGui::MenuItem("Quit", "Alt+F4")) {}
-	
+
 }
 
 void GUI_Client::HelpMarker_Impl(const char* desc)

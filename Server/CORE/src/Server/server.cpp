@@ -2,36 +2,42 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <iphlpapi.h>
 
-#include <cstdio>
 #include <thread>
 
 #include "Shared/helpers.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
-#define DEFAULT_BUFLEN 512
+#define DEFAULT_BUF_LEN 512
 
 namespace server {
+	struct client_data {
+		std::string name = "[PLACEHOLDER CLIENT]";
+		std::string ip;
+
+		std::jthread* ptr_thread = nullptr;
+	};
+	std::vector<client_data> clients;
+
 	std::jthread m_listening_thread;
 	std::jthread m_receiving_thread;
 
-	int8_t ReceiverBuffer[DEFAULT_BUFLEN];
+	int8_t ReceiverBuffer[DEFAULT_BUF_LEN];
 
-	WSADATA wsaData;
+	WSADATA WSA_Data;
 	SOCKET ListenSocket = INVALID_SOCKET;
 	SOCKET ClientSocket = INVALID_SOCKET;
+
 	int StartServer(){
 		debug::printf("Starting Server...\n");
 
-
 		addrinfo* result = nullptr;
-		addrinfo hints;
+		addrinfo hints{};
 		int iResult = 0;
 
 		debug::printf("\tWSAStartup...\n");
-		iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+		iResult = WSAStartup(MAKEWORD(2,2), &WSA_Data);
 		if (iResult) {
 			debug::printf("\t\tWSAStartup failed: %d\n", iResult);
 			goto WSAStartup_error;
@@ -75,6 +81,8 @@ namespace server {
 
 		freeaddrinfo(result);
 
+		OnServerStarted.Broadcast();
+
 		m_listening_thread = std::jthread(worker_StartListening);
 
 		return 0;
@@ -103,6 +111,8 @@ namespace server {
 	int worker_StartListening(const std::stop_token& stop_token) {
 		debug::printf("Starting listening...\n");
 
+		OnServerListening.Broadcast();
+
 		debug::printf("\tlisten()...\n");
 		if (listen(ListenSocket, SOMAXCONN) == SOCKET_ERROR) {
 			debug::printf("\t\tListen failed with error: %ld\n", WSAGetLastError());
@@ -112,7 +122,8 @@ namespace server {
 		}
 
 		debug::printf("\taccept()...\n");
-		ClientSocket = accept(ListenSocket, nullptr, nullptr);
+		sockaddr socket_address{};
+		ClientSocket = accept(ListenSocket, &socket_address, nullptr);
 		if (ClientSocket == INVALID_SOCKET) {
 			debug::printf("\t\taccept failed: %d\n", WSAGetLastError());
 			closesocket(ListenSocket);
@@ -122,6 +133,19 @@ namespace server {
 
 		debug::printf("\tConnection Accepted!\n\n");
 
+		client_data new_client;
+		char ClientName[DEFAULT_BUF_LEN];
+		if(Receive(ClientName))
+		{
+			debug::printf("\tCouldn't receive Client's name.\n\n");
+		}
+		else
+		{
+			new_client.name = ClientName;
+		}
+		OnClientConnected.Broadcast(ClientName);
+		clients.emplace_back(new_client);
+
 		closesocket(ListenSocket);
 
 		m_receiving_thread = std::jthread(worker_Receiver);
@@ -129,26 +153,30 @@ namespace server {
 		return 0;
 	}
 
+	int Receive(char* return_buffer) {
+		if (ClientSocket == INVALID_SOCKET) {
+			return 1;
+		}
+
+		return recv(ClientSocket, return_buffer, DEFAULT_BUF_LEN, 0);
+	}
 
 	int worker_Receiver(const std::stop_token& stop_token) {
 		debug::printf("Receiver loop...\n");
 
 		int iResult;
-		int iSendResult;
 
 		// Receive until the peer shuts down the connection
 		do {
 			if(stop_token.stop_requested()) {
 				debug::printf("\tStopping worker thread for a Receiver\n");
 
-				goto shutdown;
-
 				return 0;
 			}
 
 			debug::printf("\trecv...\n");
 
-			iResult = recv(ClientSocket, (char*)ReceiverBuffer, DEFAULT_BUFLEN, 0);
+			iResult = Receive((char*)ReceiverBuffer);
 			if (iResult > 0)
 			{
 				debug::printf("\t\tBytes received: %d\n", iResult);
@@ -171,27 +199,44 @@ namespace server {
 
 		} while (iResult > 0);
 
-		shutdown:{ // shutdown the send half of the connection since no more data will be sent
-			iResult = shutdown(ClientSocket, SD_SEND);
-			if (iResult == SOCKET_ERROR) {
-				debug::printf("\tShutdown failed: %d\n", WSAGetLastError());
-
-				closesocket(ClientSocket);
-				WSACleanup();
-
-				return 1;
-			}
-
-			closesocket(ClientSocket);
-			WSACleanup();
-		}
-
 		debug::printf("Receiver has stopped!\n\n");
 
-		return 0;
+		return ShutdownServer(); // shutdown the send half of the connection since no more data will be sent
 	}
 
-	int SendToAll(uint8_t* data) {
+	int ShutdownServer() {
+		if (ClientSocket == INVALID_SOCKET) {
+			return 1;
+		}
+
+		int error = 0;
+		if (shutdown(ClientSocket, SD_SEND) == SOCKET_ERROR) {
+			debug::printf("\tShutdown failed: %d\n", WSAGetLastError());
+			error = 1;
+		}
+
+		closesocket(ClientSocket);
+		WSACleanup();
+
+		debug::printf("Server has stopped!\n\n");
+
+		OnServerShutdown.Broadcast();
+
+		return error;
+	}
+
+	int SendCommandToAll(int8_t command, std::string&& data) {
+		char* command_msg = new char[data.size() + 2];
+		command_msg[0] = command;
+		strcpy_s(command_msg+1, data.size()+1, data.c_str());
+
+		const int res = SendToAll((int8_t*)command_msg);
+		delete[] command_msg;
+
+		return res;
+	}
+
+	int SendToAll(int8_t* data) {
 		if(ClientSocket == INVALID_SOCKET) { return 1; }
 
 		if (send(ClientSocket, (char*)data, (int) strlen((char*)data), 0) == SOCKET_ERROR) {
@@ -207,6 +252,11 @@ namespace server {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ProcessResult(int8_t* bytes) {
+		if (bytes[0] == 0x7F) {
+			OnClientDisconnected.Broadcast((char*)bytes+1);
+			return;
+		}
+
 		OnMessageReceived.Broadcast(bytes);
 	}
 }

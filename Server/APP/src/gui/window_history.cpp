@@ -3,12 +3,16 @@
 #include "server.h"
 #include "Shared/imgui/imgui.h"
 
+void GUI_History::AddMessage(std::string&& message) {
+	m_history.emplace_back(std::move(message));
+}
+
 void GUI_History::AddServerMessage(char* message) {
-	m_history.emplace_back("[Server]:" + std::string(message));
+	AddMessage("[Server]:" + std::string(message));
 }
 
 void GUI_History::AddClientMessage(char* message) {
-	m_history.emplace_back("[Client]:" + std::string(message));
+	AddMessage("[Client]:" + std::string(message));
 }
 
 void GUI_History::ShowHistoryWindow(){

@@ -13,16 +13,16 @@
 #pragma comment(lib, "Mswsock.lib")
 #pragma comment(lib, "AdvApi32.lib")
 
-#define DEFAULT_BUFLEN 512
+#define DEFAULT_BUF_LEN 512
 
 namespace client {
 	std::jthread m_receiving_thread;
 
-	char ReceiveBuffer[DEFAULT_BUFLEN];
+	char ReceiveBuffer[DEFAULT_BUF_LEN];
 
 	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET;
-	int StartClient(){
+	int StartClient(char* new_client_name){
 		debug::printf("Creating Client Socket...\n");
 
 		addrinfo* result = nullptr;
@@ -70,6 +70,9 @@ namespace client {
 		freeaddrinfo(result);
 
 		debug::printf("\tConnected to the server!\n\n");
+
+		SendData((int8_t*)new_client_name);
+		ClientName = new_client_name;
 
 		m_receiving_thread = std::jthread(worker_Receiver);
 
@@ -122,16 +125,17 @@ namespace client {
 		int iResult;
 		// Receive until the peer closes the connection
 		do {
-			iResult = recv(ConnectSocket, ReceiveBuffer, DEFAULT_BUFLEN, 0);
+			iResult = recv(ConnectSocket, ReceiveBuffer, DEFAULT_BUF_LEN, 0);
 
 			if(iResult > 0)
 			{
 				debug::printf("\tBytes received: %d\n", iResult);
-				OnClientMessageReceived.Broadcast((int8_t*)ReceiveBuffer);
+				ProcessResult((int8_t*)ReceiveBuffer);
 			}
 			else if(iResult == 0)
 			{
 				debug::printf("\tConnection closed\n");
+				OnServerShutdown.Broadcast();
 			}
 			else
 			{
@@ -148,11 +152,15 @@ namespace client {
 	int ClientShutdown() {
 		debug::printf("Shutting down Client Socket");
 
-		m_receiving_thread.request_stop();
-		debug::printf("\tStopping thread.");
-		m_receiving_thread.join();
+		if (m_receiving_thread.joinable()) {
+			debug::printf("\tStopping thread.");
+			m_receiving_thread.request_stop();
+			m_receiving_thread.join();
+			debug::printf("\tThread is stopped.");
+		}
 
-		debug::printf("\tThread is done.");
+		//Shutdown message to the server.
+		SendCommand(0x7F, ClientName);
 
 		if (shutdown(ConnectSocket, SD_SEND) == SOCKET_ERROR) {
 			debug::printf("\t\tShutdown failed with error: %d\n", WSAGetLastError());
@@ -169,9 +177,24 @@ namespace client {
 		return 0;
 	}
 
+	int SendCommand(int8_t command, std::string& data) {
+		char* command_msg = new char[data.size() + 2];
+		command_msg[0] = command;
+		strcpy_s(command_msg+1, data.size()+1, data.c_str());
+
+		const int res = SendData((int8_t*)command_msg);
+		delete[] command_msg;
+
+		return res;
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ProcessResult(int8_t* bytes) {
+		if (bytes[0] == 0x7F) {
+			OnServerKick.Broadcast((char*)bytes+1);
+			ClientShutdown();
+			return;
+		}
 		OnClientMessageReceived.Broadcast(bytes);
 	}
 }

@@ -16,6 +16,9 @@ void GUI_Client::OnMessageReceived(int8_t* bytes) {
 void GUI_Client::Init(SDL_Renderer* renderer) {
 	client::OnClientMessageReceived.AddMember(this, &GUI_Client::OnMessageReceived);
 
+	client::OnServerShutdown.AddLambda([] {
+		GUI_History::AddMessage("Server Shutdown!");
+	});
 	GUI_History::OnSendEvent.AddMember(this, &GUI_Client::CommandTrySend);
 	GUI_History::OnSendEvent.AddStatic(&GUI_History::AddClientMessage);
 }
@@ -200,6 +203,7 @@ void GUI_Client::Render()
 }
 
 void GUI_Client::CleanUp() {
+	client::ClientShutdown();
 	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();

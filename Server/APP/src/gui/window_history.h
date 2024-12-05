@@ -7,6 +7,7 @@ DECLARE_MULTICAST_DELEGATE(OnSend, char*);
 
 class GUI_History {
 public:
+	static void AddMessage(std::string&& message);
 	static void AddServerMessage(char* message);
 	static void AddClientMessage(char* message);
 

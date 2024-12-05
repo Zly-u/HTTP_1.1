@@ -6,7 +6,7 @@
 #include "server.h"
 
 void GUI_Server::CommandTrySend(char* str) {
-	server::SendToAll((uint8_t*)str);
+	server::SendToAll((int8_t*)str);
 }
 
 void GUI_Server::OnMessageReceived(int8_t* bytes) {
@@ -14,6 +14,22 @@ void GUI_Server::OnMessageReceived(int8_t* bytes) {
 }
 
 void GUI_Server::Init(SDL_Renderer* renderer) {
+	server::OnServerStarted.AddLambda([]() {
+		GUI_History::AddMessage("Server Started!");
+	});
+
+	server::OnClientConnected.AddLambda([](char* ClientName) {
+		GUI_History::AddMessage("Client Connected " + std::string(ClientName));
+	});
+
+	server::OnClientDisconnected.AddLambda([](char* ClientName) {
+		GUI_History::AddMessage("Client Disconnected " + std::string(ClientName));
+	});
+
+	server::OnServerShutdown.AddLambda([] {
+		GUI_History::AddMessage("Server has shutdown!");
+	});
+
 	server::OnMessageReceived.AddMember(this, &GUI_Server::OnMessageReceived);
 
 	GUI_History::OnSendEvent.AddMember(this, &GUI_Server::CommandTrySend);
@@ -200,6 +216,8 @@ void GUI_Server::Render()
 }
 
 void GUI_Server::CleanUp() {
+	server::ShutdownServer();
+
 	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();

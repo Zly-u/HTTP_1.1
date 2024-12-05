@@ -3,12 +3,16 @@
 #include "client.h"
 #include "Shared/imgui/imgui.h"
 
+void GUI_History::AddMessage(std::string&& message) {
+	m_history.emplace_back(std::move(message));
+}
+
 void GUI_History::AddServerMessage(char* message) {
-	m_history.emplace_back("[Server]:" + std::string(message));
+	AddMessage("[Server]:" + std::string(message));
 }
 
 void GUI_History::AddClientMessage(char* message) {
-	m_history.emplace_back("[Client]:" + std::string(message));
+	AddMessage("[Client]:" + std::string(message));
 }
 
 void GUI_History::ShowHistoryWindow(){
@@ -26,20 +30,28 @@ void GUI_History::ShowHistoryWindow(){
 		;
 
 		if (ImGui::BeginChild(69, ImVec2(-1, ImGui::GetWindowHeight() - 58), wf)) {
-			for(auto& messsage : m_history) {
-				ImGui::Text(messsage.c_str());
+			for(auto& message : m_history) {
+				ImGui::Text(message.c_str());
 			}
 		}ImGui::EndChild();
 
 		////////////////////////////////////////////////////////////////////////////////////
 
 		constexpr ImGuiInputTextFlags f_it = ImGuiInputTextFlags_None;
-
+		static char c_name_buffer[16];
 		const float butt_width = ImGui::CalcItemWidth();
 		if (ImGui::Button("Connect")) {
-			if(client::StartClient() == 0) {
+			if (strlen(c_name_buffer) != 0) {
+				if(client::StartClient(c_name_buffer) == 0) {
+				}
 			}
 		}
+
+		ImGui::SameLine();
+
+		ImGui::PushItemWidth(60);
+		ImGui::InputTextWithHint("##", "Your name", c_name_buffer, 128, f_it);
+		ImGui::PopItemWidth();
 
 		ImGui::SameLine();
 
